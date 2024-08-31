@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -66,6 +66,16 @@ class CarListView(LoginRequiredMixin, generic.ListView):
 
 class CarDetailView(LoginRequiredMixin, generic.DetailView):
     model = Car
+
+    def post(self, request, *args, **kwargs):
+        car = get_object_or_404(Car, id=self.kwargs["pk"])
+
+        if request.user in car.drivers.all():
+            car.drivers.remove(request.user)
+        else:
+            car.drivers.add(request.user)
+
+        return redirect(reverse("taxi:car-detail", kwargs={"pk": car.id}))
 
 
 class CarCreateView(LoginRequiredMixin, generic.CreateView):
